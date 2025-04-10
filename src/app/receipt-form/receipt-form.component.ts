@@ -7,6 +7,8 @@ import {
 } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
+import { ReceiptService } from '../receipt.service';
+import { Receipt } from '../receipt.model';
 
 @Component({
   selector: 'app-receipt-form',
@@ -16,7 +18,7 @@ import { HttpClient } from '@angular/common/http';
 })
 export class ReceiptFormComponent {
   private fb = inject(FormBuilder);
-  private http = inject(HttpClient);
+  private receiptService = inject(ReceiptService);
 
   receiptForm: FormGroup;
   selectedFile: File | null = null;
@@ -40,35 +42,24 @@ export class ReceiptFormComponent {
 
   onSubmit(): void {
     if (this.receiptForm.valid && this.selectedFile) {
-      const formData = new FormData();
-      formData.append('date', this.receiptForm.get('date')?.value);
-      formData.append('amount', this.receiptForm.get('amount')?.value);
-      formData.append(
-        'description',
+      const receipt = new Receipt(
+        this.receiptForm.get('date')?.value,
+        this.receiptForm.get('amount')?.value,
         this.receiptForm.get('description')?.value
       );
-      formData.append('file', this.selectedFile);
 
-      console.log('FormData contents:');
-      formData.forEach((value: FormDataEntryValue, key: string) => {
-        console.log(key, value);
+      this.receiptService.addReceipt(receipt, this.selectedFile).subscribe({
+        next: (response: any) => {
+          this.message = response.message || 'Receipt submitted successfully!';
+          this.receiptForm.reset();
+          this.selectedFile = null;
+        },
+        error: (error) => {
+          this.errorMessage =
+            'Error submitting receipt!! Please try again later. If the problem persists, contact the system administrator for assistance. If you are a developer, please check console for more details';
+          console.log(`Error = ${error.message}`);
+        },
       });
-
-      this.http
-        .post('https://localhost:7237/api/receipts', formData)
-        .subscribe({
-          next: (response: any) => {
-            this.message =
-              response.message || 'Receipt submitted successfully!';
-            this.receiptForm.reset();
-            this.selectedFile = null;
-          },
-          error: (error) => {
-            this.errorMessage =
-              'Error submitting receipt!! Please try again later. If the problem persists, contact the system administrator for assistance. If you are a developer, please check console for more details';
-            console.log(`Error = ${error.message}`);
-          },
-        });
     }
   }
 }
