@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ViewChild, ElementRef } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -6,7 +6,6 @@ import {
   Validators,
 } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
 import { ReceiptService } from '../receipt.service';
 import { Receipt } from '../receipt.model';
 
@@ -24,6 +23,9 @@ export class ReceiptFormComponent {
   selectedFile: File | null = null;
   message: string | null = null;
   errorMessage: string | null = null;
+
+  @ViewChild('fileInput')
+  fileInput!: ElementRef;
 
   constructor() {
     this.receiptForm = this.fb.group({
@@ -53,6 +55,7 @@ export class ReceiptFormComponent {
           this.message = response.message || 'Receipt submitted successfully!';
           this.receiptForm.reset();
           this.selectedFile = null;
+          this.fileInput.nativeElement.value = '';
         },
         error: (error) => {
           this.errorMessage =
